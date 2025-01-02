@@ -1,16 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './pages/App.tsx';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
 import * as serviceWorkerRegistration from './serviceWorkerRegistration.ts';
 import reportWebVitals from './reportWebVitals.ts';
+
+import ChatList from './pages/ChatList.tsx';
+import ChatRoom from './pages/ChatRoom.tsx';
+
+import './index.css';
+import './styles/text.css'
+import './styles/color.css'
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/chatlist" element={<ChatList />} />
+        <Route path="/chatroom" element={<ChatRoom />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );
 
