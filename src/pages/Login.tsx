@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import { login } from "../app/api/loginApi.tsx";
 
 const Container = styled.div`
   display: flex;
@@ -188,36 +190,37 @@ const Footer = styled.div`
 `;
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isUsernameFocused, setIsUsernameFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
-  const isButtonActive = email.length > 0 && password.length > 0;
+  const isButtonActive = username.length > 0 && password.length > 0;
+  const navigate = useNavigate();
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
+    setUsername(e.target.value);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("로그인 시도:", { email, password });
+    try {
+      const response = await login({ username });
 
-    // if (!email || !password) {
-    //   alert("이메일과 비밀번호를 입력해주세요.");
-    //   return;
-    // }
-
-    if (isButtonActive) {
-      alert("로그인 성공!");
-      // navigate('/chat-list');
-    } else {
-      alert("이메일과 비밀번호를 입력해주세요.");
-      return;
+      if (response.code === 200) {
+        alert("로그인 성공!");
+        console.log("토큰:", response.data.Authorization);
+        navigate("/chatlist"); // 로그인 성공 후 이동할 경로
+      } else {
+        alert(response.data); // 실패 메시지 출력
+      }
+    } catch (error) {
+      console.error("로그인 오류:", error.message);
+      alert("로그인에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -226,7 +229,7 @@ const Login: React.FC = () => {
       <Title>로그인</Title>
       <Form onSubmit={handleSubmit}>
         <FormGroup>
-          <InputGroup isFocused={isEmailFocused}>
+          <InputGroup isFocused={isUsernameFocused}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="17"
@@ -267,9 +270,9 @@ const Login: React.FC = () => {
               type="email"
               id="email"
               maxLength={30}
-              value={email}
-              onFocus={() => setIsEmailFocused(true)}
-              onBlur={() => setIsEmailFocused(false)}
+              value={username}
+              onFocus={() => setIsUsernameFocused(true)}
+              onBlur={() => setIsUsernameFocused(false)}
               onChange={handleEmailChange}
               placeholder="이메일을 입력해주세요."
               required
