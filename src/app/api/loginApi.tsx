@@ -1,6 +1,6 @@
 import axios from "axios";
-
-const BASE_URL = "http://localhost:8080";
+import { mockLoginResponse, mockUsers } from "./mockData.ts"; // mockData 파일 import
+import { SERVER_URL } from "../../constants/ServerURL.js";
 
 interface LoginRequest {
   username: string;
@@ -22,11 +22,27 @@ interface LoginFailureResponse {
 type LoginResponse = LoginSuccessResponse | LoginFailureResponse;
 
 export const login = async (
-  credentials: LoginRequest
+  credentials: LoginRequest,
+  useMock: boolean = false // Mock 사용 여부 플래그
 ): Promise<LoginResponse> => {
+  if (useMock) {
+    console.log("Mock data 사용");
+    // Mock 유저 검색
+    const user = mockUsers.find((u) => u.username === credentials.username);
+
+    if (user) {
+      return Promise.resolve(mockLoginResponse as LoginResponse);
+    } else {
+      return Promise.resolve({
+        code: 400,
+        data: "존재하지 않는 아이디 입니다.",
+      });
+    }
+  }
+
   try {
     const response = await axios.post<LoginResponse>(
-      `${BASE_URL}/auth/signin`,
+      `${SERVER_URL}/auth/signin`,
       credentials,
       {
         headers: {

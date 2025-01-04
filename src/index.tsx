@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { subscribeToPush } from "./components/subscribeToPush.ts";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration.ts";
 import reportWebVitals from "./reportWebVitals.ts";
 import {
@@ -17,6 +16,12 @@ import NotisList from "./pages/NotisList.tsx";
 import "./index.css";
 import "./styles/text.css";
 import "./styles/color.css";
+
+// // FCM 토큰 요청 및 권한 확인
+// requestPermissionAndGetToken();
+
+// // 포그라운드 메시지 처리
+// onForegroundMessage();
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -34,15 +39,15 @@ root.render(
   </React.StrictMode>
 );
 
-if ("Notification" in window) {
-  Notification.requestPermission().then((permission) => {
-    if (permission === "granted") {
-      subscribeToPush(); // 알림 권한 허용 시 푸시 구독 실행
-    } else {
-      console.log("푸시 알림 권한이 거부되었습니다.");
-    }
-  });
-}
+// if ("Notification" in window) {
+//   Notification.requestPermission().then((permission) => {
+//     if (permission === "granted") {
+//       subscribeToPush(); // 알림 권한 허용 시 푸시 구독 실행
+//     } else {
+//       console.log("푸시 알림 권한이 거부되었습니다.");
+//     }
+//   });
+// }
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
@@ -54,12 +59,6 @@ if ("serviceWorker" in navigator) {
       console.error("[Service Worker] 서비스 워커 등록 실패:", error);
     });
 }
-
-// FCM 토큰 요청 및 권한 확인
-requestPermissionAndGetToken();
-
-// 포그라운드 메시지 처리
-onForegroundMessage();
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { login } from "../app/api/loginApi.tsx";
+import { registerFcmToken } from "../app/api/registerFcmTokenAPI.tsx";
+import {
+  requestPermissionAndGetToken,
+  onForegroundMessage,
+} from "../firebase/messaging.ts";
 
 const Container = styled.div`
   display: flex;
@@ -209,11 +214,35 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await login({ username });
+      const response = await login({ username }, true); // true로 Mock 활성화
 
       if (response.code === 200) {
         alert("로그인 성공!");
         console.log("토큰:", response.data.Authorization);
+
+        // FCM 토큰 발급
+        const fcmToken = await requestPermissionAndGetToken();
+        if (fcmToken) {
+          try {
+            // FCM 토큰 등록 요청
+            const registerResponse = await registerFcmToken(
+              Number(response.data.username), // 여기에 userId 또는 username을 변환
+              fcmToken
+            );
+            if (registerResponse.success) {
+              console.log("FCM 토큰 등록 성공:", registerResponse.message);
+            } else {
+              console.error("FCM 토큰 등록 실패:", registerResponse.error);
+            }
+          } catch (error) {
+            console.error("FCM 토큰 등록 요청 실패:", error.message);
+          }
+        } else {
+          console.warn("FCM 토큰을 가져올 수 없습니다.");
+        }
+
+        // 포그라운드 메시지 처리
+        onForegroundMessage();
         navigate("/chatlist"); // 로그인 성공 후 이동할 경로
       } else {
         alert(response.data); // 실패 메시지 출력
