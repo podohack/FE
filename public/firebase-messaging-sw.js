@@ -19,11 +19,9 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// 백그라운드 메시지 처리
 messaging.onBackgroundMessage((payload) => {
-  console.log(
-    "[firebase-messaging-sw.js] Received background message:",
-    payload
-  );
+  console.log("[firebase-messaging-sw.js] 백그라운드 메시지 수신:", payload);
 
   const notificationTitle = payload.notification?.title || "Default Title";
   const notificationOptions = {

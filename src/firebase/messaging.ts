@@ -1,5 +1,5 @@
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import firebaseApp from "./firebase";
+import firebaseApp from "./firebase.js";
 
 const messaging = getMessaging(firebaseApp);
 
@@ -35,6 +35,7 @@ export const onForegroundMessage = () => {
 
     // 브라우저 알림 표시
     if (Notification.permission === "granted") {
+      console.log("알림 권한이 허용되었습니다.");
       new Notification(title || "Default Title", {
         body: body || "Default Body",
         icon: icon || "/default-icon.png",

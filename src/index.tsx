@@ -48,10 +48,10 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .register("/firebase-messaging-sw.js") // 서비스 워커 등록
     .then((registration) => {
-      console.log("[Service Worker] Registered:", registration);
+      console.log("[Service Worker] 서비스 워커 등록 완료:", registration);
     })
     .catch((error) => {
-      console.error("[Service Worker] Registration Failed:", error);
+      console.error("[Service Worker] 서비스 워커 등록 실패:", error);
     });
 }
 
