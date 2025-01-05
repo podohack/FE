@@ -3,48 +3,66 @@ import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
+import { connectChatSocket, sendEnterMessage, sendTalkMessage, sendExitMessage } from '../api/chatApi.tsx';
+
 import TopNav from '../components/nav/TopNav.tsx';
 
-import profileImg from '../assets/images/smile_dog.png'; // 프로필 사진 경로
+import profileImg from '../assets/images/smile_dog.png';
 import backIcon from '../assets/images/left_arrow.png';
 import moreOptionIcon from '../assets/images/vertical_3dots.png';
+
+interface Message {
+    id: number;
+    userId: number;
+    sender: string;
+    text: string;
+    timestamp: string;
+    date: string;
+}
 
 function ChatRoom() {
     const navigate = useNavigate();
     const location = useLocation();
     const query = new URLSearchParams(location.search);
-    const userId = query.get('userId');
+    const chatRoomId = query.get('chatRoomId');
+    const username = query.get('userName');  
 
-    const [isUser, setIsUser] = useState(false);
-    const [showDate, setShowDate] = useState([]); // showDate를 상태로 관리
-    const [inputValue, setInputValue] = useState('');
+    const [showDate, setShowDate] = useState<boolean[]>([]); // showDate를 상태로 관리
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [inputValue, setInputValue] = useState<string>('');
+    const socketRef = useRef<WebSocket | null>(null);
 
-    const messages = [
-        {
-            id: 1,
-            userId: 1,
-            sender: '김포도',
-            text: '안녕하세요 반갑습니다 채팅입니다. 테스트입니다 테스트 테스트',
-            timestamp: '오전 8:32',
-            date: '2024년 12월 21일',
-        },
-        {
-            id: 2,
-            userId: 1,
-            sender: '김포도',
-            text: '안녕하세요 반갑습니다 채팅입니다. 테스트입니다 테스트 테스트',
-            timestamp: '오전 8:32',
-            date: '2024년 12월 22일',
-        },
-        {
-            id: 3,
-            userId: 2,
-            sender: '나',
-            text: '안녕하세요 반갑습니다 채팅임다.',
-            timestamp: '오전 8:33',
-            date: '2024년 12월 22일',
-        },
-    ];
+    useEffect(() => {
+        // WebSocket 연결
+        socketRef.current = connectChatSocket(8080);
+        const socket = socketRef.current;
+    
+        socket.onopen = () => {
+          console.log('WebSocket 연결 성공');
+          sendEnterMessage(socket, chatRoomId, username);
+        };
+    
+        socket.onmessage = (event) => {
+          const message = JSON.parse(event.data);
+          setMessages((prevMessages) => [...prevMessages, message]);
+        };
+    
+        socket.onclose = () => {
+          console.log('WebSocket 연결 종료');
+        };
+    
+        return () => {
+          sendExitMessage(socket, chatRoomId, username);
+          socket.close();
+        };
+      }, [chatRoomId, username]);
+
+      const handleSendMessage = () => {
+        if (inputValue.trim() && socketRef.current) {
+          sendTalkMessage(socketRef.current, chatRoomId, username, inputValue);
+          setInputValue('');
+        }
+      };
 
     const handleBackIconClick = () => {
         navigate('/chatlist');
@@ -62,7 +80,7 @@ function ChatRoom() {
 
     const center = {
         icon: null,
-        text: "Podo-Hack",
+        text: username,
         clickFunc: null
     };
 
@@ -73,10 +91,6 @@ function ChatRoom() {
     };
 
     useEffect(() => {
-        // '나'라는 발신자가 있는지 확인하고 상태 업데이트
-        const userMessageExists = messages.some(msg => msg.sender === '나');
-        setIsUser(userMessageExists);
-
         // showDate 계산
         const datesToShow = messages.map((msg, index) => {
             // 첫 번째 메시지이거나 이전 메시지와 날짜가 다를 경우에만 true
@@ -101,7 +115,7 @@ function ChatRoom() {
 
             <MessageList>
                 {messages.map((msg, index) => {
-                    const isCurrentUser = msg.userId === 2; // 발신자 확인
+                    const isCurrentUser = msg.sender === 'user1'; // 발신자 확인
 
                     return (
                         <React.Fragment key={index}>
@@ -109,7 +123,8 @@ function ChatRoom() {
                                 <DateDivider>{msg.date}</DateDivider>
                             )}
 
-                            <Message isUser={isCurrentUser}>
+                            <TotalMessageContainer isUser={isCurrentUser}>
+
                                 {!isCurrentUser ? <ProfileImage src={profileImg} alt={msg.sender} /> : <div style={{ width: '15px' }}></div>}
 
                                 <MsgContainer>
@@ -120,8 +135,7 @@ function ChatRoom() {
                                     </MessageContainer>
                                 </MsgContainer>
 
-                            </Message>
-
+                            </TotalMessageContainer>
                         </React.Fragment>
                     );
                 })}
@@ -133,7 +147,7 @@ function ChatRoom() {
                     value={inputValue}
                     onChange={handleInputChange}
                 />
-                <SendButton isActive={inputValue.length > 0}>전송</SendButton>
+                <SendButton isActive={inputValue.length > 0} onClick={handleSendMessage}>전송</SendButton>
             </InputContainer>
 
         </ChatContainer>
@@ -176,7 +190,7 @@ font-weight: 600;
 line-height: normal;
 `;
 
-const Message = styled.div`
+const TotalMessageContainer = styled.div<{ isUser: boolean }>`
 display: flex;
 flex-direction: ${({ isUser }) => (isUser ? 'row-reverse' : 'row')};
 align-items: flex-start;
@@ -210,7 +224,7 @@ letter-spacing: 0.26px;
 `;
 
 
-const MessageContainer = styled.div`
+const MessageContainer = styled.div<{ isUser: boolean }>`
 display: flex;
 flex-direction: ${({ isUser }) => (isUser ? 'row-reverse' : 'row')};
 align-items: flex-end;
@@ -220,7 +234,7 @@ width: 100%;
 gap: 10px;
 `;
 
-const MessageContent = styled.div`
+const MessageContent = styled.div<{ isUser: boolean }>`
 width: 65%;
 background: ${({ isUser }) => (isUser ? '#d1f0d1' : 'blue')};
 background: #53575B;
@@ -284,7 +298,7 @@ outline: none;
 }
 `;
 
-const SendButton = styled.button`
+const SendButton = styled.button<{ isActive: boolean }>`
 width: 63px;
 height: 45px;
 border-radius: 10px;

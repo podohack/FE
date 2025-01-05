@@ -36,7 +36,14 @@ function ChatList() {
       />
 
       <ChatPersonList>
-        <Link to={`/chatroom?userId=1`} style={{ textDecoration: 'none' }}>
+        <Link to={`/chatroom?chatRoomId=1&username=user1`} style={{ textDecoration: 'none' }}>
+          <ChatPerson
+            personInfo={personInfo}
+            recentChatInfo={recentChatInfo}
+          />
+        </Link>
+
+        <Link to={`/chatroom?chatRoomId=2&username=user2`} style={{ textDecoration: 'none' }}>
           <ChatPerson
             personInfo={personInfo}
             recentChatInfo={recentChatInfo}
